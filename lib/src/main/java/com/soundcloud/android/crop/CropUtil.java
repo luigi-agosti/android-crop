@@ -18,17 +18,21 @@ package com.soundcloud.android.crop;
 
 import android.app.ProgressDialog;
 import android.content.ContentResolver;
+import android.content.Context;
 import android.database.Cursor;
 import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Handler;
+import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
+import android.support.annotation.Nullable;
 import android.text.TextUtils;
-
-import com.soundcloud.android.crop.util.Log;
 
 import java.io.Closeable;
 import java.io.File;
+import java.io.FileDescriptor;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 
 /*
@@ -39,7 +43,7 @@ class CropUtil {
     private static final String SCHEME_FILE = "file";
     private static final String SCHEME_CONTENT = "content";
 
-    public static void closeSilently(Closeable c) {
+    public static void closeSilently(@Nullable Closeable c) {
         if (c == null) return;
         try {
             c.close();
@@ -83,7 +87,8 @@ class CropUtil {
         }
     }
 
-    public static File getFromMediaUri(ContentResolver resolver, Uri uri) {
+    @Nullable
+    public static File getFromMediaUri(Context context, ContentResolver resolver, Uri uri) {
         if (uri == null) return null;
 
         if (SCHEME_FILE.equals(uri.getScheme())) {
@@ -97,7 +102,7 @@ class CropUtil {
                     final int columnIndex = (uri.toString().startsWith("content://com.google.android.gallery3d")) ?
                             cursor.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME) :
                             cursor.getColumnIndex(MediaStore.MediaColumns.DATA);
-                    // Picasa image on newer devices with Honeycomb and up
+                    // Picasa images on API 13+
                     if (columnIndex != -1) {
                         String filePath = cursor.getString(columnIndex);
                         if (!TextUtils.isEmpty(filePath)) {
@@ -105,6 +110,9 @@ class CropUtil {
                         }
                     }
                 }
+            } catch (IllegalArgumentException e) {
+                // Google Drive images
+                return getFromMediaUriPfd(context, resolver, uri);
             } catch (SecurityException ignored) {
                 // Nothing we can do
             } finally {
@@ -114,9 +122,44 @@ class CropUtil {
         return null;
     }
 
+    private static String getTempFilename(Context context) throws IOException {
+        File outputDir = context.getCacheDir();
+        File outputFile = File.createTempFile("image", "tmp", outputDir);
+        return outputFile.getAbsolutePath();
+    }
+
+    @Nullable
+    private static File getFromMediaUriPfd(Context context, ContentResolver resolver, Uri uri) {
+        if (uri == null) return null;
+
+        FileInputStream input = null;
+        FileOutputStream output = null;
+        try {
+            ParcelFileDescriptor pfd = resolver.openFileDescriptor(uri, "r");
+            FileDescriptor fd = pfd.getFileDescriptor();
+            input = new FileInputStream(fd);
+
+            String tempFilename = getTempFilename(context);
+            output = new FileOutputStream(tempFilename);
+
+            int read;
+            byte[] bytes = new byte[4096];
+            while ((read = input.read(bytes)) != -1) {
+                output.write(bytes, 0, read);
+            }
+            return new File(tempFilename);
+        } catch (IOException ignored) {
+            // Nothing we can do
+        } finally {
+            closeSilently(input);
+            closeSilently(output);
+        }
+        return null;
+    }
+
     public static void startBackgroundJob(MonitoredActivity activity,
             String title, String message, Runnable job, Handler handler) {
-        // Make the progress dialog uncancelable, so that we can gurantee
+        // Make the progress dialog uncancelable, so that we can guarantee
         // the thread will be done before the activity getting destroyed
         ProgressDialog dialog = ProgressDialog.show(
                 activity, title, message, true, false);
@@ -125,50 +168,50 @@ class CropUtil {
 
     private static class BackgroundJob extends MonitoredActivity.LifeCycleAdapter implements Runnable {
 
-        private final MonitoredActivity mActivity;
-        private final ProgressDialog mDialog;
-        private final Runnable mJob;
-        private final Handler mHandler;
-        private final Runnable mCleanupRunner = new Runnable() {
+        private final MonitoredActivity activity;
+        private final ProgressDialog dialog;
+        private final Runnable job;
+        private final Handler handler;
+        private final Runnable cleanupRunner = new Runnable() {
             public void run() {
-                mActivity.removeLifeCycleListener(BackgroundJob.this);
-                if (mDialog.getWindow() != null) mDialog.dismiss();
+                activity.removeLifeCycleListener(BackgroundJob.this);
+                if (dialog.getWindow() != null) dialog.dismiss();
             }
         };
 
         public BackgroundJob(MonitoredActivity activity, Runnable job,
                              ProgressDialog dialog, Handler handler) {
-            mActivity = activity;
-            mDialog = dialog;
-            mJob = job;
-            mActivity.addLifeCycleListener(this);
-            mHandler = handler;
+            this.activity = activity;
+            this.dialog = dialog;
+            this.job = job;
+            this.activity.addLifeCycleListener(this);
+            this.handler = handler;
         }
 
         public void run() {
             try {
-                mJob.run();
+                job.run();
             } finally {
-                mHandler.post(mCleanupRunner);
+                handler.post(cleanupRunner);
             }
         }
 
         @Override
         public void onActivityDestroyed(MonitoredActivity activity) {
             // We get here only when the onDestroyed being called before
-            // the mCleanupRunner. So, run it now and remove it from the queue
-            mCleanupRunner.run();
-            mHandler.removeCallbacks(mCleanupRunner);
+            // the cleanupRunner. So, run it now and remove it from the queue
+            cleanupRunner.run();
+            handler.removeCallbacks(cleanupRunner);
         }
 
         @Override
         public void onActivityStopped(MonitoredActivity activity) {
-            mDialog.hide();
+            dialog.hide();
         }
 
         @Override
         public void onActivityStarted(MonitoredActivity activity) {
-            mDialog.show();
+            dialog.show();
         }
     }
 
