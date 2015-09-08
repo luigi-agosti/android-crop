@@ -2,16 +2,10 @@
 <pre-dex-items>
 
     <item
-        dex="/Users/luigi/dev/prj/com.depop/android-crop/example/build/intermediates/pre-dexed/debug/classes-aed0ebea2beb0652192de135a7859d7142c103dd.jar"
-        jar="/Users/luigi/dev/prj/com.depop/android-crop/example/build/intermediates/exploded-aar/com.soundcloud.android/lib/0.9.8.1/classes.jar"
+        dex="/Users/akshay/Projects/Depop/android-crop/example/build/intermediates/pre-dexed/debug/classes-0c45f7c7b2f4428afa381c93ed345b8f9220ba45.jar"
+        jar="/Users/akshay/Projects/Depop/android-crop/example/build/intermediates/exploded-aar/com.soundcloud.android/lib/0.9.8.1/classes.jar"
         jumboMode="false"
         revision="19.1.0"
-        sha1="807061e7e1060d9c13a48c12e429139d418d373f"/>
-    <item
-        dex="/Users/luigi/dev/prj/com.luigiagosti/android-crop/example/build/intermediates/pre-dexed/debug/classes-2322d67068df3d397bf7de6ef1154f5f862f5146.jar"
-        jar="/Users/luigi/dev/prj/com.luigiagosti/android-crop/example/build/intermediates/exploded-aar/com.soundcloud.android/lib/0.9.8.1/classes.jar"
-        jumboMode="false"
-        revision="19.1.0"
-        sha1="935c7b32e6030a37c7142f48949ebd9fed37f6e1"/>
+        sha1="b0dcf6b5e27feeb4fa47705b66c82c5289fbe23e"/>
 
 </pre-dex-items>
