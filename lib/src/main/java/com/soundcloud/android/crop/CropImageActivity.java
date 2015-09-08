@@ -25,13 +25,11 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.net.Uri;
 import android.opengl.GLES10;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.MediaStore;
 import android.view.View;
 import android.view.Window;
-import android.view.WindowManager;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,10 +41,10 @@ import java.util.concurrent.CountDownLatch;
  */
 public class CropImageActivity extends MonitoredActivity {
 
-    private static final int MAX_TEXTURE_SIZE = 2000;
-    private static final int BUFFER_SIZE = 64 * 1024;
     private static final int SIZE_DEFAULT = 2048;
     private static final int SIZE_LIMIT = 4096;
+    public static final int FULL_ROTATION = 360;
+    public static final int QUARTER_ROTATION = 90;
 
     private final Handler handler = new Handler();
 
@@ -71,10 +69,11 @@ public class CropImageActivity extends MonitoredActivity {
     @Override
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
-        setupWindowFlags();
-        setupViews();
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        setContentView(R.layout.crop__activity_crop);
+        initViews();
 
-        loadInput();
+        setupFromIntent();
         if (rotateBitmap == null) {
             finish();
             return;
@@ -82,16 +81,7 @@ public class CropImageActivity extends MonitoredActivity {
         startCrop();
     }
 
-    private void setupWindowFlags() {
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-        }
-    }
-
-    private void setupViews() {
-        setContentView(R.layout.crop__activity_crop);
-
+    private void initViews() {
         imageView = (CropImageView) findViewById(R.id.crop_image);
         imageView.context = this;
         imageView.setRecycler(new ImageViewTouchBase.Recycler() {
@@ -114,9 +104,15 @@ public class CropImageActivity extends MonitoredActivity {
                 onSaveClicked();
             }
         });
+
+        findViewById(R.id.btn_rotate).setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                onRotateClicked();
+            }
+        });
     }
 
-    private void loadInput() {
+    private void setupFromIntent() {
         Intent intent = getIntent();
         Bundle extras = intent.getExtras();
 
@@ -302,6 +298,14 @@ public class CropImageActivity extends MonitoredActivity {
         saveImage(croppedImage);
     }
 
+    private void onRotateClicked() {
+        int currentRotation = rotateBitmap.getRotation();
+        exifRotation = (currentRotation + QUARTER_ROTATION) % FULL_ROTATION;
+        rotateBitmap.setRotation(exifRotation);
+        imageView.clearHighlightViews();
+        startCrop();
+    }
+
     private void saveImage(Bitmap croppedImage) {
         if (croppedImage != null) {
             final Bitmap b = croppedImage;
@@ -357,7 +361,7 @@ public class CropImageActivity extends MonitoredActivity {
 
         } catch (IOException e) {
             Log.e("Error cropping image: " + e.getMessage(), e);
-            setResultException(e);
+            finish();
         } catch (OutOfMemoryError e) {
             Log.e("OOM cropping image: " + e.getMessage(), e);
             setResultException(e);
@@ -379,6 +383,7 @@ public class CropImageActivity extends MonitoredActivity {
         if (saveUri != null) {
             OutputStream outputStream = null;
             try {
+                croppedImage = rotateBitmap(croppedImage);
                 outputStream = getContentResolver().openOutputStream(saveUri);
                 if (outputStream != null) {
                     croppedImage.compress(Bitmap.CompressFormat.JPEG, 90, outputStream);
@@ -388,12 +393,8 @@ public class CropImageActivity extends MonitoredActivity {
                 Log.e("Cannot open file: " + saveUri, e);
             } finally {
                 CropUtil.closeSilently(outputStream);
+                croppedImage.recycle();
             }
-
-            CropUtil.copyExifRotation(
-                    CropUtil.getFromMediaUri(this, getContentResolver(), sourceUri),
-                    CropUtil.getFromMediaUri(this, getContentResolver(), saveUri)
-            );
 
             setResultUri(saveUri);
         }
@@ -407,6 +408,12 @@ public class CropImageActivity extends MonitoredActivity {
         });
 
         finish();
+    }
+
+    private Bitmap rotateBitmap(Bitmap bitmap) {
+        Matrix matrix = new Matrix();
+        matrix.postRotate(exifRotation);
+        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
     }
 
     @Override

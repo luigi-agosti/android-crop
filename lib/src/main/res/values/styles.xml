@@ -9,7 +9,7 @@
         <item name="android:divider">@drawable/crop__divider</item>
         <item name="android:showDividers" tools:ignore="NewApi">middle</item>
         <item name="android:dividerPadding" tools:ignore="NewApi">12dp</item>
-        <item name="android:background">@color/crop__button_bar</item>
+        <item name="android:background">@color/primary</item>
     </style>
 
     <style name="Crop.ActionButton">
