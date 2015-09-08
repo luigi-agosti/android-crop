@@ -1,16 +1,35 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    style="@style/Crop.DoneCancelBar">
+              style="@style/Crop.DoneCancelBar">
 
-    <FrameLayout
+
+    <ImageButton
         android:id="@+id/btn_cancel"
-        style="@style/Crop.ActionButton">
-        <TextView style="@style/Crop.ActionButtonText.Cancel" />
-    </FrameLayout>
+        android:layout_width="@dimen/crop__bar_height"
+        android:layout_height="@dimen/crop__bar_height"
+        android:scaleType="center"
+        android:src="@drawable/ic_action_navigation_close"
+        android:background="?android:selectableItemBackground"/>
 
-    <FrameLayout
+    <View
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
+
+    <ImageButton
+        android:id="@+id/btn_rotate"
+        android:layout_width="@dimen/crop__bar_height"
+        android:layout_height="@dimen/crop__bar_height"
+        android:scaleType="center"
+        android:src="@drawable/ic_action_image_rotate_right"
+        android:background="?android:selectableItemBackground"/>
+
+
+    <ImageButton
         android:id="@+id/btn_done"
-        style="@style/Crop.ActionButton">
-        <TextView style="@style/Crop.ActionButtonText.Done" />
-    </FrameLayout>
+        android:layout_width="@dimen/crop__bar_height"
+        android:layout_height="@dimen/crop__bar_height"
+        android:scaleType="center"
+        android:src="@drawable/ic_action_navigation_check"
+        android:background="?android:selectableItemBackground"/>
 
 </LinearLayout>
