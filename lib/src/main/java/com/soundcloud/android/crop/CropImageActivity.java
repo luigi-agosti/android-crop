@@ -223,8 +223,8 @@ public class CropImageActivity extends MonitoredActivity {
 
             Rect imageRect = new Rect(0, 0, width, height);
 
-            // Make the default size about 4/5 of the width or height
-            int cropWidth = Math.min(width, height) * 4 / 5;
+            // Make the default size about 100% of the width or height
+            int cropWidth = Math.min(width, height);
             @SuppressWarnings("SuspiciousNameCombination")
             int cropHeight = cropWidth;
 
