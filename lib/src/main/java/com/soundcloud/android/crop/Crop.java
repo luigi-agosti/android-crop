@@ -112,7 +112,7 @@ public class Crop {
      * @param context  Context
      * @param fragment Fragment to receive result
      */
-    public void start(Context context, android.support.v4.app.Fragment fragment) {
+    public void start(Context context, androidx.fragment.app.Fragment fragment) {
         start(context, fragment, REQUEST_CROP);
     }
 
@@ -134,7 +134,7 @@ public class Crop {
      * @param fragment    Fragment to receive result
      * @param requestCode requestCode for result
      */
-    public void start(Context context, android.support.v4.app.Fragment fragment, int requestCode) {
+    public void start(Context context, androidx.fragment.app.Fragment fragment, int requestCode) {
         fragment.startActivityForResult(getIntent(context), requestCode);
     }
 
@@ -193,7 +193,7 @@ public class Crop {
      * @param context  Context
      * @param fragment Fragment to receive result
      */
-    public static void pickImage(Context context, android.support.v4.app.Fragment fragment) {
+    public static void pickImage(Context context, androidx.fragment.app.Fragment fragment) {
         pickImage(context, fragment, REQUEST_PICK);
     }
 
@@ -233,7 +233,7 @@ public class Crop {
      * @param fragment    Fragment to receive result
      * @param requestCode requestCode for result
      */
-    public static void pickImage(Context context, android.support.v4.app.Fragment fragment, int requestCode) {
+    public static void pickImage(Context context, androidx.fragment.app.Fragment fragment, int requestCode) {
         try {
             fragment.startActivityForResult(getImagePicker(), requestCode);
         } catch (ActivityNotFoundException e) {
